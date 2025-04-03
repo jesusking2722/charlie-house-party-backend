@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const path = require("path");
 const { verifyGoogleCode } = require("../services/googleService");
+const { fetchClientToken, createSession } = require("../helper/kyc");
 require("dotenv").config();
 
 const googleLogin = async (req, res) => {
@@ -126,6 +127,8 @@ const getMe = async (req, res) => {
   }
 };
 
+// Update //////////////////////////////////////////////////////////////////////////////
+
 const updateFirstMe = async (req, res) => {
   try {
     const { id } = req.params;
@@ -135,6 +138,13 @@ const updateFirstMe = async (req, res) => {
     let user = await User.findById(id);
     if (!user) {
       return res.status(404).json({ ok: false, message: "User not found" });
+    }
+
+    if (user.avatar) {
+      const oldAvatarPath = path.join(__dirname, "..", user.avatar);
+      if (fs.existsSync(oldAvatarPath)) {
+        fs.unlinkSync(oldAvatarPath);
+      }
     }
 
     user.name = name;
@@ -153,6 +163,7 @@ const updateFirstMe = async (req, res) => {
 const updateBannerMe = async (req, res) => {
   try {
     const { id } = req.params;
+    console.log(id);
     const bannerUrl = req.file ? `/uploads/banners/${req.file.filename}` : null;
     let user = await User.findById(id);
     if (!user) {
@@ -165,6 +176,29 @@ const updateBannerMe = async (req, res) => {
       }
     }
     user.banner = bannerUrl;
+    await user.save();
+    res.json({ ok: true, data: { user } });
+  } catch (error) {
+    console.log("update first me error: ", error);
+    res.status(500).json({ ok: false, message: "Server error" });
+  }
+};
+
+const updateAvatarMe = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const avatarUrl = req.file ? `/uploads/avatars/${req.file.filename}` : null;
+    let user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ ok: false, message: "User not found" });
+    }
+    if (user.avatar) {
+      const oldAvatarPath = path.join(__dirname, "..", user.avatar);
+      if (fs.existsSync(oldAvatarPath)) {
+        fs.unlinkSync(oldAvatarPath);
+      }
+    }
+    user.avatar = avatarUrl;
     await user.save();
     res.json({ ok: true, data: { user } });
   } catch (error) {
@@ -189,6 +223,81 @@ const updateMe = async (req, res) => {
   }
 };
 
+////////////////////////////////////////////////////////////////////////////////////
+
+// KYC verification field
+
+const startKycVerification = async (req, res) => {
+  try {
+    const accessToken = await fetchClientToken();
+    const userId = req.user.id;
+    console.log("userId", userId);
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.json({ message: "User not found" });
+    }
+    if (user.kyc.sessionId) {
+      return res.json({
+        data: user.kyc,
+        success: true,
+        message: "User's session is existing",
+      });
+    }
+    const session = await createSession(accessToken);
+    if (!session) {
+      return res.json({ message: "Verification is failed" });
+    }
+    const {
+      session_id,
+      session_number,
+      session_token,
+      vendor_data,
+      status,
+      url,
+    } = session;
+
+    const data = {
+      sessionId: session_id,
+      sessionNumber: session_number,
+      sessionToken: session_token,
+      vendorData: vendor_data,
+      status,
+      url,
+    };
+    user.kyc = data;
+    await user.save();
+    res.json({ data: { user }, ok: true, message: "Verification is started" });
+  } catch (error) {
+    console.log("start kyc verification error: ", error);
+  }
+};
+
+const fetchSessionDecision = async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    const session = await getSessionDecision(sessionId);
+    if (!session) {
+      return res.json({ message: "Invalid session" });
+    }
+    const { session_id, session_number, session_token, status } = session;
+    const data = {
+      sessionId: session_id,
+      sessionNumber: session_number,
+      sessionToken: session_token,
+      status,
+    };
+    res.json({
+      data,
+      message: "Fetched session successfully",
+      ok: true,
+    });
+  } catch (error) {
+    console.log("fetch session decision error: ", error);
+  }
+};
+
+//////////////////////////////////////////////////////////////////////////////////////
+
 module.exports = {
   googleLogin,
   emailRegister,
@@ -198,4 +307,7 @@ module.exports = {
   updateFirstMe,
   updateMe,
   updateBannerMe,
+  updateAvatarMe,
+  startKycVerification,
+  fetchSessionDecision,
 };
