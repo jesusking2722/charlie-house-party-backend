@@ -4,7 +4,7 @@ const partySchema = new mongoose.Schema({
   type: {
     type: String,
     enum: ["birthday", "common", "wedding", "corporate"],
-    default: "common"
+    default: "common",
   },
   title: {
     type: String,
@@ -24,11 +24,11 @@ const partySchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  region: {
+  address: {
     type: String,
     required: true,
   },
-  address: {
+  region: {
     type: String,
     required: true,
   },
