@@ -2,12 +2,15 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const connectDB = require("./config/db");
-require("dotenv").config();
+const http = require("http");
+const setupSocket = require("./socket");
+
+// routes
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const openAiRoutes = require("./routes/openAiRoutes");
-const http = require("http");
-const setupSocket = require("./socket");
+const partyRoutes = require("./routes/partyRoutes");
+require("dotenv").config();
 
 const app = express();
 
@@ -31,6 +34,7 @@ app.use("/uploads", express.static("uploads"));
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/ai", openAiRoutes);
+app.use("/api/party", partyRoutes);
 
 const PORT = process.env.PORT || 5001;
 

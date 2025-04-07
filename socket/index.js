@@ -10,7 +10,6 @@ module.exports = (io) => {
     // Listen for create party events
     socket.on("create_party", async (newParty) => {
       try {
-        console.log("new party: ", newParty);
         const party = await createParty(newParty);
         console.log("saved new party: ", party);
         io.emit("party:created", party);
