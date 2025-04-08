@@ -85,16 +85,18 @@ const emailRegister = async (req, res) => {
 
 const emailLogin = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body.user;
     const user = await User.findOne({ email });
     if (!user) {
       return res.json({ ok: false, message: "User not found" });
     }
+    console.log(user)
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.json({ ok: false, message: "Wrong password" });
     }
-    const token = jwt.sign({ id: newUser.id }, process.env.JWT_SECRET, {
+    console.log(user._id);
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "3d",
     });
     res.json({ ok: true, data: { token: `Bearer ${token}`, user } });
