@@ -4,11 +4,7 @@ const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const path = require("path");
 const { verifyGoogleCode } = require("../services/googleService");
-const {
-  fetchClientToken,
-  createSession,
-  getSessionDecision,
-} = require("../helper/kyc");
+const { fetchClientToken, createSession } = require("../helper/kyc");
 require("dotenv").config();
 
 const googleLogin = async (req, res) => {
@@ -271,7 +267,6 @@ const updateMe = async (req, res) => {
       // .populate("notifications.sticker")
       // .populate("notifications.applicant")
       .populate("notifications.user");
-    console.log(updatingUser);
     if (!updatingUser) {
       return res.status(404).json({ ok: false, message: "User not found" });
     }
@@ -294,23 +289,15 @@ const updateMe = async (req, res) => {
 const startKycVerification = async (req, res) => {
   try {
     const accessToken = await fetchClientToken();
-    const userId = req.body.user._id;
+    const userId = req.user.id;
     console.log("userId", userId);
-    const user = await User.findById(userId)
-      .populate("reviews.reviewer")
-      .populate("reviews.party")
-      .populate("reviews.party.creator")
-      .populate("notifications.party")
-      .populate("notifications.party.creator")
-      // .populate("notifications.sticker")
-      // .populate("notifications.applicant")
-      .populate("notifications.user");
+    const user = await User.findById(userId);
     if (!user) {
       return res.json({ message: "User not found" });
     }
     if (user.kyc.sessionId) {
       return res.json({
-        data: { user },
+        data: user.kyc,
         success: true,
         message: "User's session is existing",
       });

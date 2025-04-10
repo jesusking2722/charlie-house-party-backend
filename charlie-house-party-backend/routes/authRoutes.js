@@ -25,7 +25,7 @@ router.patch("/me/first/:id", uploadAvatar, updateFirstMe);
 router.patch("/me/banner/:id", uploadBanner, updateBannerMe);
 router.patch("/me/avatar/:id", uploadAvatar, updateAvatarMe);
 router.patch("/me", updateMe);
-router.post("/start-kyc", startKycVerification);
+router.get("/kyc", startKycVerification);
 router.post("/kyc", fetchSessionDecision);
 
 module.exports = router;
