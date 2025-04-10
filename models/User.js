@@ -31,6 +31,43 @@ const reviewSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  party: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "party",
+  },
+});
+
+const notificationSchema = new mongoose.Schema({
+  type: {
+    type: String,
+    required: true,
+    enum: [
+      "party-opened",
+      "party-completed",
+      "party-cancelled",
+      "applicant-applied",
+      "applicant-accepted",
+      "applicant-rejected",
+      "sticker-added",
+      "sticker-bought",
+      "announcement",
+    ],
+  },
+  content: { type: String, default: null },
+  createdAt: { type: Date, default: Date.now },
+  read: { type: Boolean, default: false },
+  party: { type: mongoose.Schema.Types.ObjectId, ref: "party", default: null },
+  sticker: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "sticker",
+    default: null,
+  },
+  applicant: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "applicant",
+    default: null,
+  },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "user", default: null },
 });
 
 const userSchema = new mongoose.Schema({
@@ -47,7 +84,7 @@ const userSchema = new mongoose.Schema({
     default: null,
     unique: true,
   },
-  password: {type: String, required: true},
+  password: { type: String, required: true },
   avatar: {
     type: String,
     default: null,
@@ -112,6 +149,7 @@ const userSchema = new mongoose.Schema({
   about: { type: String },
   rate: { type: Number, default: 0 },
   totalCompleted: { type: Number, default: 0 },
+  notifications: { type: [notificationSchema], default: [] },
 });
 
 module.exports = mongoose.model("user", userSchema);

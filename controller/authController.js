@@ -90,7 +90,7 @@ const emailLogin = async (req, res) => {
     if (!user) {
       return res.json({ ok: false, message: "User not found" });
     }
-    console.log(user)
+    console.log(user);
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.json({ ok: false, message: "Wrong password" });
@@ -118,10 +118,32 @@ const emailVerification = async (req, res) => {
 const getMe = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await User.findById(id);
+    const user = await User.findById(id)
+      .populate("reviews.reviewer")
+      .populate("reviews.party")
+      .populate("reviews.party.creator")
+      .populate("notifications.party")
+      .populate("notifications.party.creator")
+      // .populate("notifications.sticker")
+      // .populate("notifications.applicant")
+      .populate("notifications.user");
+
+    user.notifications = await Promise.all(
+      user.notifications.map(async (notification) => {
+        if (notification.party && notification.party.creator) {
+          const creator = await User.findById(
+            notification.party.creator.toString()
+          );
+          notification.party.creator = creator;
+        }
+        return notification;
+      })
+    );
+
     if (!user) {
       return res.json({ ok: false, message: "User not found" });
     }
+
     res.json({ ok: true, data: { user } });
   } catch (error) {
     console.log("get me error: ", error);
@@ -137,7 +159,15 @@ const updateFirstMe = async (req, res) => {
     const { name, shortname } = req.body;
     const avatarUrl = req.file ? `/uploads/avatars/${req.file.filename}` : null;
 
-    let user = await User.findById(id);
+    let user = await User.findById(id)
+      .populate("reviews.reviewer")
+      .populate("reviews.party")
+      .populate("reviews.party.creator")
+      .populate("notifications.party")
+      .populate("notifications.party.creator")
+      // .populate("notifications.sticker")
+      // .populate("notifications.applicant")
+      .populate("notifications.user");
     if (!user) {
       return res.status(404).json({ ok: false, message: "User not found" });
     }
@@ -167,7 +197,15 @@ const updateBannerMe = async (req, res) => {
     const { id } = req.params;
     console.log(id);
     const bannerUrl = req.file ? `/uploads/banners/${req.file.filename}` : null;
-    let user = await User.findById(id);
+    let user = await User.findById(id)
+      .populate("reviews.reviewer")
+      .populate("reviews.party")
+      .populate("reviews.party.creator")
+      .populate("notifications.party")
+      .populate("notifications.party.creator")
+      // .populate("notifications.sticker")
+      // .populate("notifications.applicant")
+      .populate("notifications.user");
     if (!user) {
       return res.status(404).json({ ok: false, message: "User not found" });
     }
@@ -190,7 +228,15 @@ const updateAvatarMe = async (req, res) => {
   try {
     const { id } = req.params;
     const avatarUrl = req.file ? `/uploads/avatars/${req.file.filename}` : null;
-    let user = await User.findById(id);
+    let user = await User.findById(id)
+      .populate("reviews.reviewer")
+      .populate("reviews.party")
+      .populate("reviews.party.creator")
+      .populate("notifications.party")
+      .populate("notifications.party.creator")
+      // .populate("notifications.sticker")
+      // .populate("notifications.applicant")
+      .populate("notifications.user");
     if (!user) {
       return res.status(404).json({ ok: false, message: "User not found" });
     }
@@ -212,9 +258,20 @@ const updateAvatarMe = async (req, res) => {
 const updateMe = async (req, res) => {
   try {
     const { user } = req.body;
-    let updatingUser = await User.findById(user._id);
+    let updatingUser = await User.findById(user._id)
+      .populate("reviews.reviewer")
+      .populate("reviews.party")
+      .populate("reviews.party.creator")
+      .populate("notifications.party")
+      .populate("notifications.party.creator")
+      // .populate("notifications.sticker")
+      // .populate("notifications.applicant")
+      .populate("notifications.user");
     if (!updatingUser) {
       return res.status(404).json({ ok: false, message: "User not found" });
+    }
+    if (user.notifications) {
+      updatingUser.notifications = user.notifications;
     }
     updatingUser.set(user);
     await updatingUser.save();
