@@ -36,6 +36,6 @@ app.use("/api/user", userRoutes);
 app.use("/api/ai", openAiRoutes);
 app.use("/api/party", partyRoutes);
 
-const PORT = process.env.PORT || 5001;
+const PORT = 5001;
 
 server.listen(PORT, () => console.log(`Server is running on port ${PORT}`));

@@ -90,7 +90,6 @@ const emailLogin = async (req, res) => {
     if (!user) {
       return res.json({ ok: false, message: "User not found" });
     }
-    console.log(user);
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.json({ ok: false, message: "Wrong password" });

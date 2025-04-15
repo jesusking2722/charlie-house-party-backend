@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const stickerSchema = require("./Sticker");
 
 const reviewSchema = new mongoose.Schema({
   reviewer: {
@@ -57,11 +58,7 @@ const notificationSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   read: { type: Boolean, default: false },
   party: { type: mongoose.Schema.Types.ObjectId, ref: "party", default: null },
-  sticker: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "sticker",
-    default: null,
-  },
+  sticker: { type: [stickerSchema], default: [] },
   applicant: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "applicant",
@@ -150,6 +147,7 @@ const userSchema = new mongoose.Schema({
   rate: { type: Number, default: 0 },
   totalCompleted: { type: Number, default: 0 },
   notifications: { type: [notificationSchema], default: [] },
+  stickers: { type: [stickerSchema], default: [] },
 });
 
 module.exports = mongoose.model("user", userSchema);

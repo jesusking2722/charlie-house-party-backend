@@ -8,9 +8,16 @@ const getAllUsers = async (req, res) => {
       .populate("reviews.party.creator")
       .populate("notifications.party")
       .populate("notifications.party.creator")
+      .populate({
+        path: "notifications.applicant",
+        populate: {
+          path: "applier",
+        },
+      })
+      // .populate("notifications.sticker")
       .populate("notifications.user");
 
-    const updatedUsers = await Promise.all(
+    let updatedUsers = await Promise.all(
       users.map(async (user) => {
         user.notifications = await Promise.all(
           user.notifications.map(async (notification) => {
@@ -20,6 +27,10 @@ const getAllUsers = async (req, res) => {
             }
             return notification;
           })
+        );
+        // Sort notifications for each user by createdAt in descending order
+        user.notifications.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
         );
         return user;
       })

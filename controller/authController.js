@@ -90,11 +90,18 @@ const emailRegister = async (req, res) => {
 const emailLogin = async (req, res) => {
   try {
     const { email, password } = req.body.user;
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email })
+      .populate("reviews.reviewer")
+      .populate("reviews.party")
+      .populate("reviews.party.creator")
+      .populate("notifications.party")
+      .populate("notifications.party.creator")
+      // .populate("notifications.sticker")
+      // .populate("notifications.applicant")
+      .populate("notifications.user");
     if (!user) {
       return res.json({ ok: false, message: "User not found" });
     }
-    console.log(user);
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.json({ ok: false, message: "Wrong password" });
@@ -129,8 +136,16 @@ const getMe = async (req, res) => {
       .populate("notifications.party")
       .populate("notifications.party.creator")
       // .populate("notifications.sticker")
-      // .populate("notifications.applicant")
+      .populate({
+        path: "notifications.applicant",
+        populate: {
+          path: "applier",
+        },
+      })
       .populate("notifications.user");
+    if (!user) {
+      return res.json({ ok: false, message: "User not found" });
+    }
 
     user.notifications = await Promise.all(
       user.notifications.map(async (notification) => {
@@ -144,9 +159,7 @@ const getMe = async (req, res) => {
       })
     );
 
-    if (!user) {
-      return res.json({ ok: false, message: "User not found" });
-    }
+    user.notifications.sort((a, b) => b.createdAt - a.createdAt);
 
     res.json({ ok: true, data: { user } });
   } catch (error) {
@@ -169,12 +182,31 @@ const updateFirstMe = async (req, res) => {
       .populate("reviews.party.creator")
       .populate("notifications.party")
       .populate("notifications.party.creator")
+      .populate({
+        path: "notifications.applicant",
+        populate: {
+          path: "applier",
+        },
+      })
       // .populate("notifications.sticker")
-      // .populate("notifications.applicant")
       .populate("notifications.user");
     if (!user) {
       return res.status(404).json({ ok: false, message: "User not found" });
     }
+
+    user.notifications = await Promise.all(
+      user.notifications.map(async (notification) => {
+        if (notification.party && notification.party.creator) {
+          const creator = await User.findById(
+            notification.party.creator.toString()
+          );
+          notification.party.creator = creator;
+        }
+        return notification;
+      })
+    );
+
+    user.notifications.sort((a, b) => b.createdAt - a.createdAt);
 
     if (user.avatar) {
       const oldAvatarPath = path.join(__dirname, "..", user.avatar);
@@ -207,12 +239,32 @@ const updateBannerMe = async (req, res) => {
       .populate("reviews.party.creator")
       .populate("notifications.party")
       .populate("notifications.party.creator")
+      .populate({
+        path: "notifications.applicant",
+        populate: {
+          path: "applier",
+        },
+      })
       // .populate("notifications.sticker")
-      // .populate("notifications.applicant")
       .populate("notifications.user");
     if (!user) {
       return res.status(404).json({ ok: false, message: "User not found" });
     }
+
+    user.notifications = await Promise.all(
+      user.notifications.map(async (notification) => {
+        if (notification.party && notification.party.creator) {
+          const creator = await User.findById(
+            notification.party.creator.toString()
+          );
+          notification.party.creator = creator;
+        }
+        return notification;
+      })
+    );
+
+    user.notifications.sort((a, b) => b.createdAt - a.createdAt);
+
     if (user.banner) {
       const oldBannerPath = path.join(__dirname, "..", user.banner);
       if (fs.existsSync(oldBannerPath)) {
@@ -238,12 +290,32 @@ const updateAvatarMe = async (req, res) => {
       .populate("reviews.party.creator")
       .populate("notifications.party")
       .populate("notifications.party.creator")
+      .populate({
+        path: "notifications.applicant",
+        populate: {
+          path: "applier",
+        },
+      })
       // .populate("notifications.sticker")
-      // .populate("notifications.applicant")
       .populate("notifications.user");
     if (!user) {
       return res.status(404).json({ ok: false, message: "User not found" });
     }
+
+    user.notifications = await Promise.all(
+      user.notifications.map(async (notification) => {
+        if (notification.party && notification.party.creator) {
+          const creator = await User.findById(
+            notification.party.creator.toString()
+          );
+          notification.party.creator = creator;
+        }
+        return notification;
+      })
+    );
+
+    user.notifications.sort((a, b) => b.createdAt - a.createdAt);
+
     if (user.avatar) {
       const oldAvatarPath = path.join(__dirname, "..", user.avatar);
       if (fs.existsSync(oldAvatarPath)) {
@@ -268,18 +340,25 @@ const updateMe = async (req, res) => {
       .populate("reviews.party.creator")
       .populate("notifications.party")
       .populate("notifications.party.creator")
+      .populate({
+        path: "notifications.applicant",
+        populate: {
+          path: "applier",
+        },
+      })
       // .populate("notifications.sticker")
-      // .populate("notifications.applicant")
       .populate("notifications.user");
-    console.log(updatingUser);
+
     if (!updatingUser) {
       return res.status(404).json({ ok: false, message: "User not found" });
     }
+
     if (user.notifications) {
       updatingUser.notifications = user.notifications;
     }
     updatingUser.set(user);
     await updatingUser.save();
+    updatingUser.notifications.sort((a, b) => b.createdAt - a.createdAt);
     res.json({ ok: true, data: { user: updatingUser } });
   } catch (error) {
     console.log("update first me error: ", error);
@@ -295,23 +374,14 @@ const startKycVerification = async (req, res) => {
   try {
     const accessToken = await fetchClientToken();
     const userId = req.body.user._id;
-    console.log("userId", userId);
-    const user = await User.findById(userId)
-      .populate("reviews.reviewer")
-      .populate("reviews.party")
-      .populate("reviews.party.creator")
-      .populate("notifications.party")
-      .populate("notifications.party.creator")
-      // .populate("notifications.sticker")
-      // .populate("notifications.applicant")
-      .populate("notifications.user");
+    const user = await User.findById(userId);
     if (!user) {
       return res.json({ message: "User not found" });
     }
     if (user.kyc.sessionId) {
       return res.json({
         data: { user },
-        success: true,
+        ok: true,
         message: "User's session is existing",
       });
     }
