@@ -39,10 +39,7 @@ module.exports = (io) => {
         users.forEach((user) => {
           const userSocketId = userSocketMap.get(user._id.toString());
           if (userSocketId) {
-            io.to(userSocketId).emit(
-              "notification:party-opened",
-              newNotification
-            );
+            io.to(userSocketId).emit("notification", newNotification);
           }
         });
       } catch (error) {
@@ -65,13 +62,11 @@ module.exports = (io) => {
             applicant,
             party,
           };
-          const notification = await addNewAppliedNotification(
-            newNotification,
-            creatorId
-          );
+          await addNewAppliedNotification(newNotification, creatorId);
           io.emit("applicant:created", applicant, partyId);
           const creatorSocketId = userSocketMap.get(creatorId.toString());
-          io.to(creatorSocketId).emit("notification:applied", notification);
+          console.log(creatorSocketId);
+          io.to(creatorSocketId).emit("notification", newNotification);
         } catch (error) {
           console.error("Error creating applicant: ", error);
           socket.emit("error", "Failed to create applicant");

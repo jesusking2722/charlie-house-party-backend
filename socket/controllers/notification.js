@@ -20,14 +20,14 @@ const addNewPartyOpenedNotification = async (newNotification, myId) => {
 
 const addNewAppliedNotification = async (newNotification, creatorId) => {
   try {
-    const notification = await User.findByIdAndUpdate(
+    const updatedUser = await User.findByIdAndUpdate(
       creatorId,
       {
         $push: { notifications: newNotification },
       },
       { new: true }
     );
-    return notification;
+    return updatedUser.notifications[updatedUser.notifications.length - 1];
   } catch (error) {
     console.error("add new applicant notification error: ", error);
     return null;
