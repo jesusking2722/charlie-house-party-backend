@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const { updateMyStatus, updateMyContact } = require("./controllers/user");
 const {
   addNewPartyOpenedNotification,
   addNewAppliedNotification,
@@ -8,6 +9,7 @@ const {
   addNewApplicantToSelectedParty,
 } = require("./controllers/party");
 const { addNewApplicant } = require("./controllers/applicant");
+const { addNewTextMessage } = require("./controllers/message");
 
 const userSocketMap = new Map();
 
@@ -15,8 +17,9 @@ module.exports = (io) => {
   io.on("connection", (socket) => {
     console.log("A user connected:", socket.id);
 
-    socket.on("login", (userId) => {
+    socket.on("login", async (userId) => {
       userSocketMap.set(userId, socket.id);
+      await updateMyStatus(userId, "online");
       console.log(userSocketMap);
     });
 
@@ -65,7 +68,6 @@ module.exports = (io) => {
           await addNewAppliedNotification(newNotification, creatorId);
           io.emit("applicant:created", applicant, partyId);
           const creatorSocketId = userSocketMap.get(creatorId.toString());
-          console.log(creatorSocketId);
           io.to(creatorSocketId).emit("notification", newNotification);
         } catch (error) {
           console.error("Error creating applicant: ", error);
@@ -74,7 +76,23 @@ module.exports = (io) => {
       }
     );
 
-    socket.on("disconnect", () => {
+    socket.on("direct-party-apply", async (creatorId, userId) => {
+      const user = await updateMyContact(creatorId, userId);
+      if (typeof user === "boolean" && user) return;
+      const userSocketId = userSocketMap.get(userId.toString());
+      // To do: save new notification to creator user model and send to his frontend.
+      io.to(userSocketId).emit("update-me", user);
+    });
+
+    socket.on("message-send:text", async (senderId, receiverId, text) => {
+      const newMessage = await addNewTextMessage(senderId, receiverId, text);
+      if (!newMessage) return;
+      // To do: send new message to sender and receiver.
+    });
+
+    socket.on("disconnect", async () => {
+      const userId = userSocketMap.get(socket.id);
+      await updateMyStatus(userId, "offline");
       console.log("A user disconnected:", socket.id);
     });
   });

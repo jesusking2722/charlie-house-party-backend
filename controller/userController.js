@@ -15,7 +15,8 @@ const getAllUsers = async (req, res) => {
         },
       })
       // .populate("notifications.sticker")
-      .populate("notifications.user");
+      .populate("notifications.user")
+      .populate("contacts");
 
     let updatedUsers = await Promise.all(
       users.map(async (user) => {

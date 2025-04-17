@@ -51,6 +51,7 @@ const notificationSchema = new mongoose.Schema({
       "sticker-added",
       "sticker-bought",
       "announcement",
+      "new-contact",
     ],
   },
   content: { type: String, default: null },
@@ -150,6 +151,14 @@ const userSchema = new mongoose.Schema({
   rate: { type: Number, default: 0 },
   totalCompleted: { type: Number, default: 0 },
   notifications: { type: [notificationSchema], default: [] },
+  status: { type: String, enum: ["online", "offline"], default: "online" },
+  contacts: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+      default: null,
+    },
+  ],
 });
 
 module.exports = mongoose.model("user", userSchema);

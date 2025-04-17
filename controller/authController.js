@@ -98,7 +98,8 @@ const emailLogin = async (req, res) => {
       .populate("notifications.party.creator")
       // .populate("notifications.sticker")
       // .populate("notifications.applicant")
-      .populate("notifications.user");
+      .populate("notifications.user")
+      .populate("contacts.user");
     if (!user) {
       return res.json({ ok: false, message: "User not found" });
     }
@@ -142,7 +143,8 @@ const getMe = async (req, res) => {
           path: "applier",
         },
       })
-      .populate("notifications.user");
+      .populate("notifications.user")
+      .populate("contacts");
     if (!user) {
       return res.json({ ok: false, message: "User not found" });
     }
@@ -189,7 +191,8 @@ const updateFirstMe = async (req, res) => {
         },
       })
       // .populate("notifications.sticker")
-      .populate("notifications.user");
+      .populate("notifications.user")
+      .populate("contacts");
     if (!user) {
       return res.status(404).json({ ok: false, message: "User not found" });
     }
@@ -246,7 +249,8 @@ const updateBannerMe = async (req, res) => {
         },
       })
       // .populate("notifications.sticker")
-      .populate("notifications.user");
+      .populate("notifications.user")
+      .populate("contacts");
     if (!user) {
       return res.status(404).json({ ok: false, message: "User not found" });
     }
@@ -297,7 +301,8 @@ const updateAvatarMe = async (req, res) => {
         },
       })
       // .populate("notifications.sticker")
-      .populate("notifications.user");
+      .populate("notifications.user")
+      .populate("contacts");
     if (!user) {
       return res.status(404).json({ ok: false, message: "User not found" });
     }
@@ -347,7 +352,8 @@ const updateMe = async (req, res) => {
         },
       })
       // .populate("notifications.sticker")
-      .populate("notifications.user");
+      .populate("notifications.user")
+      .populate("contacts");
 
     if (!updatingUser) {
       return res.status(404).json({ ok: false, message: "User not found" });
