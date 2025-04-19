@@ -17,7 +17,7 @@ const updateMyContact = async (contacterId, userId) => {
 
     const user = await User.findById(userId);
     const alreadyAdded = user.contacts.some(
-      (contact) => contact.user?.toString() === contacterId.toString()
+      (contact) => contact._id.toString() === contacterId.toString()
     );
 
     if (alreadyAdded) return true;
@@ -48,4 +48,42 @@ const updateMyContact = async (contacterId, userId) => {
   }
 };
 
-module.exports = { updateMyStatus, updateMyContact };
+const updateReceiverContact = async (receiverId, senderId) => {
+  try {
+    const sender = await User.findById(senderId);
+    if (!sender) return null;
+
+    const receiver = await User.findById(receiverId);
+    const alreadyAdded = receiver.contacts.some(
+      (contact) => contact._id.toString() === senderId.toString()
+    );
+
+    if (alreadyAdded) return true;
+
+    receiver.contacts.push(senderId);
+    await receiver.save();
+
+    const populatedReceiver = await User.findById(receiverId)
+      .populate("reviews.reviewer")
+      .populate("reviews.party")
+      .populate("reviews.party.creator")
+      .populate("notifications.party")
+      .populate("notifications.party.creator")
+      .populate({
+        path: "notifications.applicant",
+        populate: {
+          path: "applier",
+        },
+      })
+      // .populate("notifications.sticker")
+      .populate("notifications.user")
+      .populate("contacts");
+
+    return populatedReceiver;
+  } catch (error) {
+    console.error("update receiver contact error: ", error);
+    return null;
+  }
+};
+
+module.exports = { updateMyStatus, updateMyContact, updateReceiverContact };

@@ -10,6 +10,7 @@ const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const openAiRoutes = require("./routes/openAiRoutes");
 const partyRoutes = require("./routes/partyRoutes");
+const messageRoutes = require("./routes/messageRoutes");
 require("dotenv").config();
 
 const app = express();
@@ -35,6 +36,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/ai", openAiRoutes);
 app.use("/api/party", partyRoutes);
+app.use("/api/message", messageRoutes);
 
 const PORT = 5001;
 

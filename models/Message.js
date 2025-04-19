@@ -12,11 +12,12 @@ const MessageSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ["read", "waiting", "sent", "received"],
-      default: "waiting",
+      default: "sent",
     },
     focus: { type: Boolean, default: false },
     forwarded: { type: Boolean, default: false },
     retracted: { type: Boolean, default: false },
+    text: { type: String, default: null },
     photo: { type: String, default: null },
     file: { type: String, default: null },
     video: { type: String, default: null },
